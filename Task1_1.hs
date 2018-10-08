@@ -28,13 +28,19 @@ infixl 7 |*|
 -- во всём выражении `expression`
 replaceVar :: String -> Term -> Term -> Term
 replaceVar varName replacement (IntConstant int) = IntConstant int
-replaceVar varName replacement (Variable var) = if (var == varName) then replacement else Variable var
-replaceVar varName replacement (BinaryTerm l r) = BinaryTerm (replaceVar varName replacement l) (replaceVar varName replacement r)
+replaceVar varName replacement (Variable var) = if (var == varName) 
+                                                then replacement 
+                                                else Variable var
+replaceVar varName replacement (BinaryTerm l r) = BinaryTerm 
+                                                    (replaceVar varName replacement l) 
+                                                    (replaceVar varName replacement r)
 
 -- Посчитать значение выражения `Term`
 -- если оно состоит только из констант
 evaluate :: Term -> Term
-evaluate (Variable var') = Variable var'
-evaluate (IntConstant int') = IntConstant int'
-evaluate (BinaryTerm (IntConstant l') (IntConstant r')) = IntConstant (l' + r') 
-evaluate (BinaryTerm l'' r'') = BinaryTerm l'' r''
+evaluate (Variable var) = Variable var
+evaluate (IntConstant int) = IntConstant int
+evaluate (BinaryTerm (IntConstant 0) (IntConstant r)) = IntConstant (r) 
+evaluate (BinaryTerm (IntConstant l) (IntConstant 0)) = IntConstant (l) 
+evaluate (BinaryTerm (IntConstant l) (IntConstant r)) = IntConstant (l + r) 
+evaluate (BinaryTerm l r) = BinaryTerm l r
