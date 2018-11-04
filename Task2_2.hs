@@ -8,6 +8,9 @@ import Prelude hiding (foldl, foldr, unfoldr, map, concatMap,
 import Data.List hiding (foldl, foldr, unfoldr, map, concatMap, 
     filter, maxBy, minBy, reverse, sum, product, elem)
 
+import Data.Maybe hiding (foldl, foldr, unfoldr, map, concatMap, 
+    filter, maxBy, minBy, reverse, sum, product, elem, catMaybes)
+
 foldl :: (b -> a -> b) -> b -> [a] -> b
 foldl f a [] = a
 foldl f a (h : t) = foldl f (f a h) t
@@ -24,17 +27,16 @@ unfoldr f b = case f b of
 -- Сумма всех элементов списка (пример)
 sum :: [Integer] -> Integer
 sum []     = 0
-sum (x:xs) = x + sum xs
+sum x = foldl (+) 0 x
 
 -- Переворот списка (Пример)
 reverse :: [a] -> [a]
 reverse [] = []  
-reverse (x:xs) = reverse xs ++ [x]  
+reverse x = foldl (\xs x'-> x' : xs) [] x 
 
 -- Отображение элементов списка
 map :: (a -> b) -> [a] -> [b]
-map _ [] = []
-map f (x:xs) = f x : map f xs
+map f x = foldr (\x acc -> f x : acc) [] x
 
 -- Произведение всех элементов списка
 product :: [Integer] -> Integer
@@ -44,33 +46,25 @@ product xs = foldl (*) 1 xs
 -- Выделение из списка Maybe всех существующих значений
 catMaybes :: [Maybe a] -> [a]
 catMaybes [] = []
-catMaybes xs = [ x | Just x <- xs ]
+catMaybes x = map fromJust (filterNot isNothing x)
 
 -- Диагональ матрицы
 diagonal :: [[a]] -> [a]
-diagonal mat = 
-    let n = length (mat !! 0)
-    in  [(mat !! y) !! x |  x <- [0..(n - 1)], 
-                            y <- [0..(n - 1)],
-                            y == x]
+diagonal mat = foldr (\str acc -> (str !! ((length str - 1) - (length acc)) : acc)) [] mat
 
 -- Фильтр для всех элементов, не соответствующих предикату
 filterNot :: (a -> Bool) -> [a] -> [a]
 filterNot _ [] = []
-filterNot f (x:xs)
-    | not(f x)  = x : (filterNot f xs)
-    | otherwise = filterNot f xs
+filterNot p xs = foldr (\x xs -> if p x then xs else x : xs) [] xs
 
 -- Поиск элемента в списке
 elem :: (Eq a) => a -> [a] -> Bool
 elem el [] = False
-elem el (x:xs)
-    | el == x = True
-    | otherwise = elem el xs
+elem x list = (filterNot ( /= x) list) /= []
 
 -- Список чисел в диапазоне [from, to) с шагом step
 rangeTo :: Integer -> Integer -> Integer -> [Integer]
-rangeTo from to step = [from, from + step.. to]
+rangeTo from to step = unfoldr (\n -> if n < to then Just (n, n + step) else Nothing) from
 
 -- Конкатенация двух списков
 append :: [a] -> [a] -> [a]
@@ -83,6 +77,7 @@ append xs ys = foldr (:) ys xs
 -- (последний кусок может быть меньше)
 groups :: [a] -> Integer -> [[a]]
 groups [] _ = []
-groups l n
-    | n > 0 = (genericTake n l) : (groups (genericDrop n l) n)
-    | otherwise = error "Negative n"
+groups l n = unfoldr (\xs -> if null xs then Nothing else (Just (splitAt k xs))) l 
+               where k = fromIntegral n
+
+testMat = [[1,2,3],[4,5,6],[7,8,9]]

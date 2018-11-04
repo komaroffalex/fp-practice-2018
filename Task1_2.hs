@@ -8,9 +8,9 @@ factorial 0 = 1
 factorial n = n * factorial (n - 1)
 
 limitRadians :: Double -> Double
-limitRadians x | ((x>=(-2*pi)) && (x<=2*pi)) = x
-               | (x<(-2*pi)) = limitRadians (x+2*pi)
-               | otherwise = limitRadians (x-2*pi)
+limitRadians x | ((x >= (-2*pi)) && (x <= 2*pi)) = x
+               | (x < (-2*pi)) = limitRadians (x + 2*pi)
+               | otherwise = limitRadians (x - 2*pi)
 
 -- синус числа (формула Тейлора)
 sin :: Double -> Double

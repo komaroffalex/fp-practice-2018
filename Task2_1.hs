@@ -24,32 +24,9 @@ contains (Node key v lt rt) k | k < key = contains lt k
 -- Значение для заданного ключа
 lookup :: Integer -> TreeMap v -> v
 lookup k EmptyTree = error "The tree is empty."
+
 lookup k (Leaf key v)           | k == key = v
-                                | otherwise = error "No such element in leaf."
-
-lookup k (Node key v (Leaf key' v') (Leaf key'' v''))     
-                                | k == key = v
-                                | k == key' = v'
-                                | k == key'' = v''
-                                | otherwise = error "No such element."
-
-lookup k (Node key v (Leaf key' v') EmptyTree)     
-                                | k == key = v
-                                | k == key' = v'                                
-                                | otherwise = error "No such element."
-
-lookup k (Node key v EmptyTree (Leaf key' v'))     
-                                | k == key = v
-                                | k == key' = v'                                
-                                | otherwise = error "No such element."
-
-lookup k (Node key v EmptyTree rt)     
-                                | k == key = v
-                                | otherwise = lookup k rt                                
-                                
-lookup k (Node key v lt EmptyTree)     
-                                | k == key = v
-                                | otherwise = lookup k lt                                   
+                                | otherwise = error "No such element in leaf."                                
 
 lookup k (Node key v lt rt)     | k < key = lookup k lt
                                 | k > key = lookup k rt
@@ -108,56 +85,53 @@ nearestLE :: Integer -> TreeMap v -> (Integer, v)
 nearestLE x EmptyTree = error "The tree is empty."
 
 nearestLE x (Leaf key val)      
-                    | key <= x = (key,val)
+                    | key <= x = (key, val)
                     | otherwise = error "No such element in leaf1."
 
-nearestLE x (Node key val EmptyTree rt)                 
-                    | key < x = nearestLE x rt
-                    | key == x = (key, val)
-                    | otherwise = error "No such element in tree." 
+nearestLE i (Node key v lt rt)    
+    | i == key = (key, v)
 
-nearestLE x (Node key val lt EmptyTree)                 
-                    | key >= x = (key, val)
-                    | otherwise = error "No such element in tree." 
+    | i < key && isLeaf lt = if ((fst $ getPair lt) <= i) 
+                            then getPair lt 
+                            else error "No nearest element founded"
 
-nearestLE x (Node key val (Leaf key' val') (Leaf key'' val''))                      
-        | x==key = (key,val)
-        | x > key = if key''> x     then (key,val)
-                                    else (key'',val'')
-        | otherwise = if x >= key'  then (key', val')
-                                    else error "No such element in leaf2." 
+    | i < key && isNode lt = 
+        if (i > (fst $ getPair lt)) 
+        then    if isNode (getRight lt) 
+                then nearestLE i (getRight lt) 
+                else    if isEmpty (getRight lt) 
+                        then (getPair lt)
+                        else    if ((fst $ getPair (getRight lt)) > i) 
+                                then (getPair lt)
+                                else nearestLE i (getRight lt)
+        else nearestLE i lt
 
-nearestLE x (Node key val (Leaf key' val') rt)                      
-        | x == key = (key,val)
-        | x < key = if x > key'     then (key', val')
-                                    else error "No such element in tree."
-        | otherwise = nearestLE x rt
+    | i > key && isEmpty rt = (key, v) 
 
-nearestLE x (Node key val (Node key' val' lt' rt') rt)              
-    | x == key = (key,val)
-    | x < key = if x > key'     
-                then    if isNode rt' 
-                        then nearestLE x rt'
-                        else    if isEmptyNode rt' 
-                                then (key',val') 
-                                else    if getLeafKey rt' > x 
-                                        then (key', val') 
-                                        else nearestLE x rt'
-                else nearestLE x lt'
-    | otherwise =   if getLeftmostEl rt <= x 
-                    then nearestLE x rt
-                    else (key, val)
-        where
-            isNode (Node key'' val'' lt'' rt'') = True
-            isNode _ = False
-            isEmptyNode EmptyTree = True
-            isEmptyNode _ = False
-            getLeafKey (Leaf key'' val'') = key''
-            getLeafKey _ = undefined   
-            getLeftmostEl (Leaf key value) = key
-            getLeftmostEl (Node key value EmptyTree rt) = key 
-            getLeftmostEl (Node key value lt rt) = ltKey 
-                where ltKey = getLeftmostEl lt
+    | i < key && isEmpty lt = error "No nearest element founded"
+
+    | otherwise =   if (getLastLeftKey rt) <= i 
+                    then nearestLE i rt 
+                    else (key, v)
+    where        
+        isLeaf (Leaf key v) = True
+        isLeaf _ = False
+
+        isNode (Node key v lt rt) = True
+        isNode _ = False
+
+        isEmpty EmptyTree = True
+        isEmpty _ = False
+
+        getRight (Node key v lt rt) = rt
+
+        getPair (Leaf key v) = (key, v)
+        getPair (Node key v lt rt) = (key, v)
+
+        getLastLeftKey (Leaf key v) = key
+        getLastLeftKey (Node key v EmptyTree _) = key
+        getLastLeftKey (Node key v lt _) = getLastLeftKey lt
+
 
 infixl 9 `insert'`
 insert' :: TreeMap v -> (Integer, v) -> TreeMap v
@@ -215,3 +189,7 @@ kMean i (Node key v lt rt)
         getMaxMeans (Leaf key' v') = 1
         getMaxMeans (Node key' v' (Leaf lKey lV) (Leaf rKey rV)) = 3
         getMaxMeans (Node key' v' lt' rt') = (getMaxMeans lt') + (getMaxMeans rt') + 1
+
+
+
+testTree = treeFromList [(25,1),(10,2),(40,3),(5,6),(15,7),(30,4),(50,5)]
