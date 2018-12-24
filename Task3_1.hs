@@ -25,33 +25,24 @@ instance Eq WeirdPeanoNumber where
     (==) (Pred a) (Pred b) = a == b
     (==) l r = False
 
-instance Ord WeirdPeanoNumber where
-    (<=) Zero Zero = True
-    (<=) Zero (Succ r)  | (r < (-1)) = False 
-                        | otherwise = True
-    (<=) Zero (Pred r)  | (r < 1) = False 
-                        | otherwise = True
-    
-    (<=) (Pred l) (Pred r) = (l <= r)
-    (<=) (Succ l) (Succ r) = (l <= r)
-    
-    (<=) (Pred l) r = toInteger (l - 1) <= toInteger r
-    (<=) (Succ l) r = toInteger (l + 1) <= toInteger r
-    
-    (<) Zero Zero = False
-    (<) Zero (Succ r)   | (r < 0) = False 
-                        | otherwise = True
-    (<) Zero (Pred r)   | (r > 1) = True 
-                        | otherwise = False
-    
-    (<) (Pred l) (Pred r) =  (l < r) 
-    (<) (Succ l) (Succ r) =  (l < r) 
-    
-    (<) (Pred l) r = toInteger (l - 1) < toInteger r
-    (<) (Succ l) r = toInteger (l + 1) < toInteger r
+simplify :: WeirdPeanoNumber -> WeirdPeanoNumber
+simplify Zero = Zero
+simplify (Succ (Pred a)) = simplify a
+simplify (Pred (Succ a)) = simplify a
+simplify (Succ a) = case simplify a of  (Pred b) -> b
+                                        _ -> Succ (simplify a)
+simplify (Pred a) = case simplify a of  (Succ b) -> b
+                                        _ -> Pred (simplify a)
 
-    (>) l r = not ((<) l r)
-    (>=) l r = not ((<=) l r)
+compareLOEWPN :: WeirdPeanoNumber -> WeirdPeanoNumber -> Bool
+compareLOEWPN (Pred l) (Pred r) = compareLOEWPN l r
+compareLOEWPN (Succ l) (Succ r) = compareLOEWPN l r
+compareLOEWPN Zero (Succ _) = True
+compareLOEWPN (Pred _) Zero = True
+compareLOEWPN l r = l == r
+
+instance Ord WeirdPeanoNumber where
+    (<=) l r = compareLOEWPN (simplify l) (simplify r)
 
 instance Num WeirdPeanoNumber where    
     negate Zero = Zero
@@ -105,15 +96,11 @@ instance Real WeirdPeanoNumber where
 
 instance Integral WeirdPeanoNumber where
     toInteger Zero = toInteger 0
-    toInteger (Succ l) = toInteger (toInteger l + 1)
-    toInteger (Pred l) = toInteger (toInteger l - 1)
+    toInteger (Succ l) = (toInteger l + 1)
+    toInteger (Pred l) = (toInteger l - 1)
 
     quotRem l Zero = error "Can not be devided by zero"
-    quotRem l r | (l == r) = (Succ (Zero), Zero)
-                | abs l < abs r = (Zero, l)
-                | l > 0 && r > 0 = quotrem' l r
-                | otherwise = quotrem' (abs l) (abs r)
-    
-                where quotrem' l r | (l == r) = (Succ(Zero), Zero)
-                                    | (l < r)  = (Zero, l)
-                                    | (l > r)  = (Succ(fst (quotrem' (l-r) r)),snd (quotrem' (l-r) r))
+    quotRem l r =   quotrem' (simplify l) (simplify r)    
+                    where quotrem' l r  | (l == r) = (Succ(Zero), Zero)
+                                        | (l < r)  = (Zero, l)
+                                        | (l > r)  = (Succ(fst (quotrem' (l-r) r)),snd (quotrem' (l-r) r))

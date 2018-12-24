@@ -28,9 +28,7 @@ instance (Ord a) => Ord (ReverseList a) where
     (<=) l r = rlistToList l <= rlistToList r 
 
 instance Semigroup (ReverseList a) where
-    (<>) l RNil = l
-    (<>) RNil r = r
-    (<>) l (RCons r r') = RCons (mappend l r) r'
+    (<>) a b = mappend a b
 
 instance Monoid (ReverseList a) where
     mempty = RNil    
