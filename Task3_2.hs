@@ -4,6 +4,10 @@ import Todo(todo)
 
 data ReverseList a = RNil | RCons (ReverseList a) a
 
+instance Foldable ReverseList where
+    foldr f a RNil = a
+    foldr f a (RCons xs x) = f x (foldr f a xs)
+
 rlistToList :: ReverseList a -> [a]
 rlistToList RNil = []
 rlistToList (RCons l r) = r : rlistToList l
@@ -28,7 +32,7 @@ instance (Ord a) => Ord (ReverseList a) where
     (<=) l r = rlistToList l <= rlistToList r 
 
 instance Semigroup (ReverseList a) where
-    (<>) a b = mappend a b
+    (<>) xs ys = foldr (\x s -> RCons s x) ys xs
 
 instance Monoid (ReverseList a) where
     mempty = RNil    

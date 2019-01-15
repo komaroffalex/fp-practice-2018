@@ -19,12 +19,6 @@ readWpn ('(' : wpn0 : wpn1 : wpn2 : wpn3 : others)
 instance Read WeirdPeanoNumber where
     readsPrec _ str = [(readWpn str, "")]
 
-instance Eq WeirdPeanoNumber where
-    (==) Zero Zero = True
-    (==) (Succ a) (Succ b) = a == b    
-    (==) (Pred a) (Pred b) = a == b
-    (==) l r = False
-
 simplify :: WeirdPeanoNumber -> WeirdPeanoNumber
 simplify Zero = Zero
 simplify (Succ (Pred a)) = simplify a
@@ -33,6 +27,12 @@ simplify (Succ a) = case simplify a of  (Pred b) -> b
                                         _ -> Succ (simplify a)
 simplify (Pred a) = case simplify a of  (Succ b) -> b
                                         _ -> Pred (simplify a)
+
+instance Eq WeirdPeanoNumber where
+    (==) Zero Zero = True
+    (==) (Succ a) (Succ b) = (simplify a) == (simplify b)    
+    (==) (Pred a) (Pred b) = (simplify a) == (simplify b)
+    (==) l r = False
 
 compareLOEWPN :: WeirdPeanoNumber -> WeirdPeanoNumber -> Bool
 compareLOEWPN (Pred l) (Pred r) = compareLOEWPN l r
@@ -101,6 +101,7 @@ instance Integral WeirdPeanoNumber where
 
     quotRem l Zero = error "Can not be devided by zero"
     quotRem l r =   quotrem' (simplify l) (simplify r)    
-                    where quotrem' l r  | (l == r) = (Succ(Zero), Zero)
-                                        | (l < r)  = (Zero, l)
-                                        | (l > r)  = (Succ(fst (quotrem' (l-r) r)),snd (quotrem' (l-r) r))
+                    where   quotrem' l r    | (l == r) = (Succ(Zero), Zero)
+                                            | (l < r)  = (Zero, l)
+                                            | (l > r)  = (a + Succ(Zero), Zero + b)
+                            (a, b) = quotrem' (l - r) r
