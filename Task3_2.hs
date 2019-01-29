@@ -29,7 +29,14 @@ instance (Eq a) => Eq (ReverseList a) where
     (==) _ _ = False
 
 instance (Ord a) => Ord (ReverseList a) where
-    (<=) l r = rlistToList l <= rlistToList r 
+    (<=) RNil RNil = True
+    (<=) RNil _ = True
+    (<=) _ RNil = False
+    (<=) (RCons l r) (RCons l' r') =    case (==) r r' of
+                                            True -> (<=) l l'
+                                            False -> case (<) r r' of
+                                                True -> True
+                                                False -> False
 
 instance Semigroup (ReverseList a) where
     (<>) xs ys = foldr (\x s -> RCons s x) ys xs
